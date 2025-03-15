@@ -246,6 +246,7 @@ void On_Delete_Key_Pressed(){
 }
 
 void sendFile_key_pressed(){
+//	static uint8_t ble_conn_st = 0;
 	if((paging.show_prev_more && current_focus_line == 0) || (paging.show_next_more && current_focus_line == 5))
 		return 1;
 	// 计算实际文件索引（需考虑分页提示符）
@@ -256,22 +257,13 @@ void sendFile_key_pressed(){
 	char full_path[12 + 3] = "0:/";
 	strcat(full_path, paging.file_list[actual_index]);
 
-	while(1){
-		if(HAL_GPIO_ReadPin(BLE_LED_GPIO_Port, BLE_LED_Pin) == GPIO_PIN_RESET)
-		{
-			sprintf(Tx_Buffer, "File_M.t7.txt=\"蓝牙未连接\"\xff\xff\xff");
-			USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
-		}else
-			break;
-
-		if(key_code == KEY_CANCEL){
-			sprintf(Tx_Buffer, "File_M.t7.txt=\"\"\xff\xff\xff");
-			USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
-			Confirm_Msg.display = 0;
-			Confirm_Msg.type = CONFIRM_NULL;
-			key_code = KEY_NULL;
-			return;
-		}
+	if(BLE_conn_sta != BLE_CONNECTED){
+		sprintf(Tx_Buffer, "File_M.t7.txt=\"蓝牙未连接\"\xff\xff\xff");
+		USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+		HAL_Delay(3000);
+		sprintf(Tx_Buffer, "File_M.t7.txt=\"\"\xff\xff\xff");
+		USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+		return;
 	}
 
 	sprintf(Tx_Buffer, "File_M.t7.txt=\"确认发送%s?\"\xff\xff\xff",paging.file_list[actual_index]);

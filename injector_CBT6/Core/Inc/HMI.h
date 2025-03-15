@@ -6,7 +6,7 @@
 #include "SD_APP.h"
 #include "ff.h"
 #include "dosage.h"
-
+#include "bluetooth.h"
 #define MAX_DISPLAY_ITEMS 6		//每页最多显示6行
 
 enum HMI_PAGE {Main_page,File_M_page};

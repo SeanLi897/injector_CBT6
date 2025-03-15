@@ -58,7 +58,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+BLE_Status BLE_conn_sta = 0;
 extern uint8_t _estack, _Min_Stack_Size;
 /* USER CODE END PV */
 
@@ -104,10 +104,10 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_ADC1_Init();
-  MX_USART1_UART_Init();
-  MX_TIM4_Init();
-  MX_TIM3_Init();
   MX_SPI1_Init();
+  MX_TIM3_Init();
+  MX_TIM4_Init();
+  MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
@@ -148,7 +148,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-  	static uint16_t i = 0;
+  	static uint16_t i = 0,t = 0;
   	if(i++ >=10000){
 			if(SDCard_states != 0 || !SD_INSERT){
 				SDCard_states = SDCard_InsertCheck();
@@ -158,6 +158,26 @@ int main(void)
 				HAL_GPIO_WritePin(LED_Y_GPIO_Port, LED_Y_Pin, GPIO_PIN_RESET);
 			}
 			i = 0;
+  	}
+
+  	if(t++ >=20000){
+  		BLE_conn_sta = check_ble_status();
+  		if(BLE_conn_sta == BLE_CONNECTED){
+			sprintf(Tx_Buffer,"Main.p2.pic=5\xff\xff\xff");
+			USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+			HAL_Delay(100);
+			sprintf(Tx_Buffer,"File_M.p1.pic=5\xff\xff\xff");
+			USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+			HAL_Delay(100);
+  		}
+  		else{
+			sprintf(Tx_Buffer,"Main.p2.pic=6\xff\xff\xff");
+			USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+			HAL_Delay(100);
+			sprintf(Tx_Buffer,"File_M.p1.pic=6\xff\xff\xff");
+			USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+			HAL_Delay(100);
+  		}
   	}
 
   	if(Injecting && (page_location == Main_page)){
