@@ -209,7 +209,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 			if(page_location == Main_page){
 				refresh_bat_vlt();
 				refresh_gasPrs();
-				HMI_GPSDataRefresh(GPS_GGA_Data,GPS_RMC_Data);
+				HMI_GPSDataRefresh(GPS_GGA_Data,GPS_ZDA_Data);
 			}
 		}
 
@@ -246,103 +246,103 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 				USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
 
 				Refresh_counter();
-
-			}else if(cheat_flag == 0 || cancel_break){
-
+			}
+			else
+			if(cheat_flag == 0 || cancel_break){
 				HAL_GPIO_WritePin(LED_Y_GPIO_Port, LED_Y_Pin, GPIO_PIN_RESET);
+			}
+
+			if(over_pressure){
+				sprintf(Tx_Buffer,"Main.t0.txt=\"注射压\r\n力超压\"\xff\xff\xff");
+				USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+
+				if(now_time_inject % 5 == 0){
+					HAL_GPIO_TogglePin(LED_Y_GPIO_Port, LED_Y_Pin);
+				}
+				pause_state = 1;
 			}
 		}
 
 		if(Injecting && !pause_state){
 			if(now_time_inject % 5 == 0)
 				HAL_GPIO_TogglePin(LED_G_GPIO_Port, LED_G_Pin);
-			}
-			else
-			{
-				if(clear_delay_time >= 3000){
-					total_inject_Times = 0;
-					total_Times = 0;
-					total_inject_Dosage = 0;
-					current_TreeNo = 0;
-					clear_counter = 1;
-					clear_delay_time = 0;
-
-					Buzzer(1000);
-					Refresh_counter();
-
-					HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin,GPIO_PIN_RESET);
-				}
-			}
-
-		if(cancel_delay_time >= 3000 && (page_location == Main_page)){
-			if(Injecting && pause_state){
-				cancel_delay_time = 0;
-				Injecting = 0;
-				totalCycles = 0;
-				InjectTimes = 0;
-				RemainingTimes = 0;
-				cancel_break = 1;
-				cheat_flag = 0;
-				current_TreeNo--;
-
-				sprintf(Tx_Buffer,"Main.t0.txt=\"取消中...\"\xff\xff\xff");
-				USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
-
-				sprintf(Tx_Buffer,"Main.n0.val=0\xff\xff\xff");
-				USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
-
-				sprintf(Tx_Buffer,"Main.t8.txt=\"\"\xff\xff\xff");
-				USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
-
-				Motor_Reverse();
-			}
-			else if(waiting_start){
-				waiting_start = 0;
-				cancel_delay_time = 0;
-				Dosage_load = 0;
-				Dosage_set = 0;
-
-				sprintf(Tx_Buffer,"Main.n0.val=%d\xff\xff\xff",Dosage_set);
-				USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
-
-				sprintf(Tx_Buffer,"Main.t8.txt=\"\"\xff\xff\xff");
-				USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
-			}
-			Dosage_set = 0;
-			sprintf(Tx_Buffer,"Main.t0.txt=\"\"\xff\xff\xff");
-			USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
-		}
-
-		if(ExGas_delay_time >= 3500 && (page_location == Main_page)){
-			EX_GAS_start = 1;
 		}
 		else
-		if(ExGas_delay_time >= 3500 && (page_location == File_M_page)){
-				ExGas_delay_time = 0;
-				EX_GAS_start = 0;
-			}
+		{
+			if(clear_delay_time >= 3000){
+				total_inject_Times = 0;
+				total_Times = 0;
+				total_inject_Dosage = 0;
+				current_TreeNo = 0;
+				clear_counter = 1;
+				clear_delay_time = 0;
 
-		if(Injecting && over_pressure){
-			sprintf(Tx_Buffer,"Main.t0.txt=\"注射压\r\n力超压\"\xff\xff\xff");
-			USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+				Buzzer(1000);
+				Refresh_counter();
 
-			if(now_time_inject % 5 == 0){
-				HAL_GPIO_TogglePin(LED_Y_GPIO_Port, LED_Y_Pin);
+				HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin,GPIO_PIN_RESET);
 			}
-			pause_state = 1;
 		}
 
-		if(confirm_press_time >= 3000 && (page_location == Main_page)){
-			confirm_press_time = 0;
-			page_location = File_M_page;
-			sprintf(Tx_Buffer,"page File_M\xff\xff\xff");
-			USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
-			HAL_Delay(20);
-			refresh_dir = 1;
-		}
+		if(page_location == Main_page){
+			if(!Injecting && confirm_press_time >= 3000){
+				confirm_press_time = 0;
+				page_location = File_M_page;
+				sprintf(Tx_Buffer,"page File_M\xff\xff\xff");
+				USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+				HAL_Delay(20);
+				refresh_dir = 1;
+			}
 
+			if(ExGas_delay_time >= 3500) EX_GAS_start = 1;
+
+			if(cancel_delay_time >= 3000){
+				if(Injecting && pause_state){
+					cancel_delay_time = 0;
+					Injecting = 0;
+					totalCycles = 0;
+					InjectTimes = 0;
+					RemainingTimes = 0;
+					cancel_break = 1;
+					cheat_flag = 0;
+					current_TreeNo--;
+
+					sprintf(Tx_Buffer,"Main.t0.txt=\"取消中...\"\xff\xff\xff");
+					USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+
+					sprintf(Tx_Buffer,"Main.n0.val=0\xff\xff\xff");
+					USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+
+					sprintf(Tx_Buffer,"Main.t8.txt=\"\"\xff\xff\xff");
+					USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+
+					Motor_Reverse();
+				}
+				else
+				if(waiting_start){
+					waiting_start = 0;
+					cancel_delay_time = 0;
+					Dosage_load = 0;
+					Dosage_set = 0;
+
+					sprintf(Tx_Buffer,"Main.n0.val=%d\xff\xff\xff",Dosage_set);
+					USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+
+					sprintf(Tx_Buffer,"Main.t8.txt=\"\"\xff\xff\xff");
+					USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+				}
+
+				Dosage_set = 0;
+				sprintf(Tx_Buffer,"Main.t0.txt=\"\"\xff\xff\xff");
+				USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+			}
+
+		}else if(page_location == File_M_page){
+			if(ExGas_delay_time >= 3500) ExGas_delay_time = 0;
+
+			if(cancel_delay_time >= 3000) cancel_delay_time = 0;
+		}
 	}//&htim3
-
 
 	if(htim == &htim4){
 		now_time++;
@@ -402,11 +402,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 		if(CONFIRM_KEY == GPIO_PIN_SET){
 			confirm_press_time = 0;
-//			HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_RESET);
 		}
 		else if(Injecting != 1 && CONFIRM_KEY == GPIO_PIN_RESET){
 			confirm_press_time++;
-//			HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_SET);
 		}
 
 		//按键被按下且超过1.5s，标记为长按按键

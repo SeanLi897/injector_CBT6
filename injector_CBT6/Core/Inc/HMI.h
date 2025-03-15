@@ -7,6 +7,7 @@
 #include "ff.h"
 #include "dosage.h"
 #include "bluetooth.h"
+#include "GPS.h"
 #define MAX_DISPLAY_ITEMS 6		//每页最多显示6行
 
 enum HMI_PAGE {Main_page,File_M_page};
@@ -51,5 +52,5 @@ void Cache_File_List();
 void On_Key_Pressed(uint8_t key_code);
 void Back_to_MainPage(void);
 void page_turning(void);
-
+void GPS_status_display(void);
 #endif /* INC_HMI_H_ */

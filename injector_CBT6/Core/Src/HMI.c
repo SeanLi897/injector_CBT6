@@ -74,7 +74,7 @@ void Refresh_Display() {
 
     // 显示前页提示
     if(paging.show_prev_more) {
-        Send_To_HMI(display_pos++, "...");
+        Send_To_HMI(display_pos++, (uint8_t*)"...");
     }
 
     // 显示当前页文件
@@ -87,7 +87,7 @@ void Refresh_Display() {
 
     // 显示后页提示
     if(paging.show_next_more) {
-        Send_To_HMI(MAX_DISPLAY_ITEMS-1, "...");
+        Send_To_HMI(MAX_DISPLAY_ITEMS-1, (uint8_t*)"...");
     }
 }
 
@@ -177,7 +177,7 @@ void page_turning(void){
 	}
 }
 
-void On_Delete_Key_Pressed(){
+int On_Delete_Key_Pressed(){
 	if((paging.show_prev_more && current_focus_line == 0) || (paging.show_next_more && current_focus_line == 5))
 		return 1;
 	// 计算实际文件索引（需考虑分页提示符）
@@ -204,7 +204,7 @@ void On_Delete_Key_Pressed(){
 			Confirm_Msg.display = 0;
 			Confirm_Msg.type = CONFIRM_NULL;
 			key_code = KEY_NULL;
-			return;
+			return 0;
 		}
 	}
 
@@ -243,9 +243,11 @@ void On_Delete_Key_Pressed(){
 	USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
 	Confirm_Msg.display = 0;
 	Confirm_Msg.type = CONFIRM_NULL;
+
+	return 0;
 }
 
-void sendFile_key_pressed(){
+int sendFile_key_pressed(){
 //	static uint8_t ble_conn_st = 0;
 	if((paging.show_prev_more && current_focus_line == 0) || (paging.show_next_more && current_focus_line == 5))
 		return 1;
@@ -263,7 +265,7 @@ void sendFile_key_pressed(){
 		HAL_Delay(3000);
 		sprintf(Tx_Buffer, "File_M.t7.txt=\"\"\xff\xff\xff");
 		USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
-		return;
+		return 0;
 	}
 
 	sprintf(Tx_Buffer, "File_M.t7.txt=\"确认发送%s?\"\xff\xff\xff",paging.file_list[actual_index]);
@@ -282,7 +284,7 @@ void sendFile_key_pressed(){
 			Confirm_Msg.display = 0;
 			Confirm_Msg.type = CONFIRM_NULL;
 			key_code = KEY_NULL;
-			return;
+			return 0;
 		}
 	}
 
@@ -294,7 +296,7 @@ void sendFile_key_pressed(){
 //			printf("文件存在\r\n");
 	} else if (res == FR_NO_FILE) {
 //			printf("文件不存在\r\n");
-			return;
+			return 0;
 	}
 
 	sprintf(Tx_Buffer, "File_M.t7.txt=\"正在发送%s\"\xff\xff\xff",paging.file_list[actual_index]);
@@ -325,6 +327,8 @@ void sendFile_key_pressed(){
 	USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
 	Confirm_Msg.display = 0;
 	Confirm_Msg.type = CONFIRM_NULL;
+
+	return 0;
 }
 
  void scroll_focus_line(void){
@@ -340,3 +344,16 @@ void sendFile_key_pressed(){
 	sprintf(Tx_Buffer,"File_M.t%d.pco=65535\xff\xff\xff",current_focus_line);
 	USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
 }
+
+ void GPS_status_display(void){
+	 if(GPS_GGA_Data.fix_status == 1){
+		sprintf(Tx_Buffer,"Main.p3.pic=8\xff\xff\xff");
+		USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+	 }else{
+		sprintf(Tx_Buffer,"Main.p3.pic=7\xff\xff\xff");
+		USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+	 }
+
+	sprintf(Tx_Buffer,"Main.n1.val=%d\xff\xff\xff",GPS_GGA_Data.satel_Num);
+	USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+ }

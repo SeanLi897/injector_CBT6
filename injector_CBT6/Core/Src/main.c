@@ -112,8 +112,8 @@ int main(void)
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_ADCEx_Calibration_Start(&hadc1);
-	HAL_ADC_Start_DMA(&hadc1,(uint32_t*)ADC_rslt, 4);
-	__HAL_DMA_DISABLE_IT(&hdma_adc1, DMA_IT_HT);
+  HAL_ADC_Start_DMA(&hadc1,(uint32_t*)ADC_rslt, 4);
+  __HAL_DMA_DISABLE_IT(&hdma_adc1, DMA_IT_HT);
   HAL_Delay(10);
 
   HAL_TIM_Base_Start_IT(&htim3);
@@ -121,19 +121,20 @@ int main(void)
   HAL_Delay(10);
 
   HMI_init();
-	HAL_Delay(100);
+  HAL_Delay(100);
 
   Motor_init();
   first_run_clcDos = 1;
   first_run = 1;
 
-	READOUT_SAVE_DATA();
-	AD24C02_DataCheck();
-	HAL_Delay(10);
+  READOUT_SAVE_DATA();
+  AD24C02_DataCheck();
+  HAL_Delay(10);
 
-	page_location = Main_page;
+  page_location = Main_page;
   HAL_UART_Receive_DMA(&huart3, &gps_rx_buffer[0], 1); // 启动接收
   SDCard_states = SDCard_InsertCheck();
+
   if(SDCard_states == 0){
     CSV_sheet_Init();
   }else{
@@ -148,19 +149,21 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+//检测SD卡是否插入----------------------------------------------------------
   	static uint16_t i = 0,t = 0;
   	if(i++ >=10000){
-			if(SDCard_states != 0 || !SD_INSERT){
-				SDCard_states = SDCard_InsertCheck();
-				HAL_GPIO_WritePin(LED_Y_GPIO_Port, LED_Y_Pin, GPIO_PIN_SET);
-			}
-			else if(SDCard_states == 0){
-				HAL_GPIO_WritePin(LED_Y_GPIO_Port, LED_Y_Pin, GPIO_PIN_RESET);
-			}
-			i = 0;
+		if(SDCard_states != 0 || !SD_INSERT){
+			SDCard_states = SDCard_InsertCheck();
+			HAL_GPIO_WritePin(LED_Y_GPIO_Port, LED_Y_Pin, GPIO_PIN_SET);
+		}
+		else if(SDCard_states == 0){
+			HAL_GPIO_WritePin(LED_Y_GPIO_Port, LED_Y_Pin, GPIO_PIN_RESET);
+		}
+		i = 0;
   	}
-
+//检测蓝牙、GPS连接状态----------------------------------------------------------
   	if(t++ >=20000){
+  		t = 0;
   		BLE_conn_sta = check_ble_status();
   		if(BLE_conn_sta == BLE_CONNECTED){
 			sprintf(Tx_Buffer,"Main.p2.pic=5\xff\xff\xff");
@@ -178,76 +181,81 @@ int main(void)
 			USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
 			HAL_Delay(100);
   		}
+
+  		GPS_status_display();
   	}
+//打药----------------------------------------------------------------------
+  	if(page_location == Main_page){
+  	  	if(Injecting){
+  			sprintf(Tx_Buffer,"Main.t0.txt=\"正在注药\"\xff\xff\xff");
+  			USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
 
-  	if(Injecting && (page_location == Main_page)){
-			sprintf(Tx_Buffer,"Main.t0.txt=\"正在注药\"\xff\xff\xff");
-			USART1_Tx_HMIdata((uint8_t*)Tx_Buffer);
+  			if(first_run_clcDos == 1){
+  				Inject_times(Dosage_load);
+  				first_run_clcDos = 0;
+  			}
+  			Inject_working();
+  		}
+  	//排气----------------------------------------------------------------------
+  		else
+  		if(!Injecting && EX_GAS_start){
+  				while(!Injecting && EX_GAS_start)
+  					Ex_GAS_Cycle();
+  		}
 
-			if(first_run_clcDos == 1){
-				Inject_times(Dosage_load);
-				first_run_clcDos = 0;
-			}
-			Inject_working();
-		}
-		else
-		if(!Injecting && EX_GAS_start && (page_location == Main_page)){
-				while(!Injecting && EX_GAS_start)
-					Ex_GAS_Cycle();
-		}
-		else
-		if(!Injecting && (page_location == File_M_page)){
-			if(refresh_dir || first_display_dir){
-				Cache_File_List();
-				Refresh_Display();
-				scroll_focus_line();
-				first_display_dir = 0;
-				refresh_dir = 0;
-			}
-
-			switch(key_code){
-				case KEY_CANCEL:
-					Back_to_MainPage();
-					break;
-				case KEY_CONFIRM:
-					page_turning();
-					break;
-				case KEY_DELETE:
-					On_Delete_Key_Pressed();
-					break;
-				case KEY_SENDFILE:
-					sendFile_key_pressed();
-					break;
-				default:
-					break;
-			}
-			key_code = KEY_NULL;
-
-			if(dir_display_refresh){
-				scroll_focus_line();
-				dir_display_refresh = 0;
-			}
-		}
-		else
-		if(page_location == Main_page)
-		{
-			Set_Dosage();
-		}
-
-		if(clear_counter && (page_location == Main_page)){
+	  //清空计数------------------------------------
+		if(clear_counter){
 			clear_counter = 0;
 			Refresh_Dosage();
 			HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin,GPIO_PIN_SET);
 			HAL_Delay(300);
 			HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin,GPIO_PIN_RESET);
 		}
+
+  		Set_Dosage();
+  	}
+
+//文件管理------------------------------------------------------------------
+  	else
+  	if(page_location == File_M_page){
+		if(refresh_dir || first_display_dir){//刷新文件列表
+			Cache_File_List();
+			Refresh_Display();
+			scroll_focus_line();
+			first_display_dir = 0;
+			refresh_dir = 0;
+		}
+
+		switch(key_code){//文件页面按键功能
+			case KEY_CANCEL:
+				Back_to_MainPage();
+				break;
+			case KEY_CONFIRM:
+				page_turning();
+				break;
+			case KEY_DELETE:
+				On_Delete_Key_Pressed();
+				break;
+			case KEY_SENDFILE:
+				sendFile_key_pressed();
+				break;
+			default:
+				break;
+		}
+		key_code = KEY_NULL;
+
+		if(dir_display_refresh){//刷新光标位置
+			scroll_focus_line();
+			dir_display_refresh = 0;
+		}
+  	}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 
-  }
+  }//while(1)
   /* USER CODE END 3 */
-}
+}//main()
 
 /**
   * @brief System Clock Configuration

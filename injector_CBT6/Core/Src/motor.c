@@ -178,7 +178,7 @@ void Inject_working(void){
 
 	Refresh_counter();
 
-	SDCard_Write_log(GPS_GGA_Data,GPS_RMC_Data);
+	SDCard_Write_log(GPS_GGA_Data,GPS_ZDA_Data);
 	refresh_dir = 1;
 
 	Buzzer(1000);

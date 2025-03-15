@@ -100,7 +100,7 @@ int CSV_sheet_Init(void){
     char file_name_buf[20] = {0};
 
     if(GPS_GGA_Data.fix_status == 1){
-    	Format_FileName_Date(file_name_buf, GPS_RMC_Data.time, GPS_RMC_Data.date);
+    	Format_FileName_Date(file_name_buf, GPS_ZDA_Data.today);
     }
     else{
     	sprintf(file_name_buf,"250101");
@@ -171,7 +171,7 @@ int SDCard_Write_log(GPS_Data GGA_Result_Data, GPS_Data RMC_Result_Data){
     SD_LogData LogBuf;
 
     if(GGA_Result_Data.fix_status == 1){    //按日期格式化文件名
-    	Format_FileName_Date(file_name_buf, GPS_RMC_Data.time, GPS_RMC_Data.date);
+    	Format_FileName_Date(file_name_buf,  GPS_ZDA_Data.today);
     }
     else{
     	sprintf(file_name_buf,"250101");
@@ -202,7 +202,7 @@ int SDCard_Write_log(GPS_Data GGA_Result_Data, GPS_Data RMC_Result_Data){
     case FR_OK://文件存在
     		char write_bf[50];
 				LogBuf.No = csv_crt_line_No++;
-				Format_GPS_Date(LogBuf.Date,RMC_Result_Data.time,RMC_Result_Data.date);
+				Format_GPS_Date(LogBuf.Date,RMC_Result_Data.today);
 				Format_GPS_Time(LogBuf.Time,RMC_Result_Data.time);
 				LogBuf.TreeSN = current_TreeNo;
 				LogBuf.TreeDose = InjectTimes*2;

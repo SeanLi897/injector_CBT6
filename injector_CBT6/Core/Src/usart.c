@@ -352,21 +352,21 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         uint8_t ch = gps_rx_buffer[gps_rx_index];
 
         if(ch == '$' || frame_header_valid){
-						frame_header_valid = 1;
-					// 检测帧尾
-					if (prev_char == '\r' && ch == '\n') {
-							gps_rx_buffer[gps_rx_index-1] = '\0'; // 终止字符串
-							gps_data_ready = true;
-							gps_rx_index = 0;
-							frame_header_valid = 0;
-					} else {
-							if (gps_rx_index < GPS_RX_BUFFER_SIZE-1) {
-									gps_rx_index++;
-							} else {
-									// 缓冲区溢出处理
-									gps_rx_index = 0;
-							}
-					}
+				frame_header_valid = 1;
+			// 检测帧尾
+			if (prev_char == '\r' && ch == '\n') {
+				gps_rx_buffer[gps_rx_index-1] = '\0'; // 终止字符串
+				gps_data_ready = true;
+				gps_rx_index = 0;
+				frame_header_valid = 0;
+			} else {
+				if (gps_rx_index < GPS_RX_BUFFER_SIZE-1) {
+					gps_rx_index++;
+				} else {
+					// 缓冲区溢出处理
+					gps_rx_index = 0;
+				}
+			}
         }
         else{
         	frame_header_valid = 0;
@@ -378,13 +378,16 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         	ret = process_gps_data(gps_rx_buffer, &gps_rsltBuf);
 
         	if(ret == 0 && strcmp(gps_rsltBuf.header,"GNGGA") == 0 && GGA_data_used){
-//            HAL_GPIO_TogglePin(LED_G_GPIO_Port, LED_G_Pin);
-            GPS_GGA_Data = gps_rsltBuf;
+        		GPS_GGA_Data = gps_rsltBuf;
         		GGA_data_used = 0;
-        	}else if(ret == 0 && strcmp(gps_rsltBuf.header,"GNRMC") == 0 && RMC_data_used){
-//            HAL_GPIO_TogglePin(LED_R_GPIO_Port, LED_R_Pin);
-            GPS_RMC_Data = gps_rsltBuf;
-        		RMC_data_used = 0;
+        	}
+        	else if(ret == 0 && strcmp(gps_rsltBuf.header,"GNZDA") == 0 && ZDA_data_used){
+        		GPS_ZDA_Data = gps_rsltBuf;
+				ZDA_data_used = 0;
+				GPS_time_get = 1;
+			}
+        	else if(ret != 0){
+        		GPS_time_get = 0;
         	}
         }
 
