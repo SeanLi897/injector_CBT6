@@ -196,6 +196,7 @@ int On_Delete_Key_Pressed(){
 	while(1){
 		if(key_code == KEY_CONFIRM){
 			key_code = KEY_NULL;
+
 			break;
 		}
 		if(key_code == KEY_CANCEL){
@@ -229,6 +230,8 @@ int On_Delete_Key_Pressed(){
 			// 更新文件列表缓存
 			Cache_File_List();
 			Refresh_Display();
+			csv_crt_line_No = 0;
+			AD24C02_Write2Byte(CSV_LAST_LINE_ADDRESS, &csv_crt_line_No);
 			// HMI提示
 //			sprintf(Tx_Buffer, "File_M.t7.txt=\"删除成功\"\xff\xff\xff");
 	}

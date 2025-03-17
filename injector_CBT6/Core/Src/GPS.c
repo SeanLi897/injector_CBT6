@@ -81,7 +81,7 @@ int process_gps_data(const char *data, GPS_Data* result) {
 					result->today.day[sizeof(result->today.day)-1] = '\0';
 				}
                 break;
-            case 3: // 纬度方向(GGA)/纬度(RMC)
+            case 3: // 纬度方向(GGA)
 				if (strcmp(result->header, "GNGGA") == 0){
 					result->lat_dir = *token;
 				}
@@ -90,7 +90,7 @@ int process_gps_data(const char *data, GPS_Data* result) {
 					result->today.month[sizeof(result->today.month)-1] = '\0';
 				}
                 break;
-            case 4: // 经度(GGA)/纬度方向(RMC)
+            case 4: // 经度(GGA)
 				if (strcmp(result->header, "GNGGA") == 0){
 					strncpy(result->longitude, token, sizeof(result->longitude) - 1);
 					result->longitude[sizeof(result->longitude) - 1] = '\0';
@@ -100,12 +100,12 @@ int process_gps_data(const char *data, GPS_Data* result) {
 					result->today.year[sizeof(result->today.year)-1] = '\0';
 				}
                 break;
-            case 5: // 经度方向(GGA)/经度(RMC)
+            case 5: // 经度方向(GGA)
 					if (strcmp(result->header, "GNGGA") == 0){
 						result->lon_dir = *token;
 					}
                 break;
-            case 6: // 定位状态（GGA）/经度方向(RMC)
+            case 6: // 定位状态（GGA）
 					if (strcmp(result->header, "GNGGA") == 0){
 						result->fix_status = (uint8_t)atoi(token);
 					}
@@ -115,7 +115,7 @@ int process_gps_data(const char *data, GPS_Data* result) {
 						result->satel_Num = (uint8_t)atoi(token);
 					}
             	break;
-            case 9: // 海拔高度（GGA）或日期（RMC）
+            case 9: // 海拔高度（GGA）
                 if (strcmp(result->header, "GNGGA") == 0) {
                     result->altitude = atof(token);
                 }
@@ -136,7 +136,7 @@ void Format_GPS_Date(char* DateResault, DATE_TYPE date) {
     strncpy(DateResault, Resault, 15);
 }
 
-//格式化日期时间字符串
+//格式化时间字符串
 void Format_GPS_Time(char* TimeResault,char* time){
 	char Resault[10] = {0};
 	// 解析时间字符串

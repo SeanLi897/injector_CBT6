@@ -135,6 +135,7 @@ int main(void)
   HAL_UART_Receive_DMA(&huart3, &gps_rx_buffer[0], 1); // 启动接收
   SDCard_states = SDCard_InsertCheck();
 
+  HAL_Delay(1500);
   if(SDCard_states == 0){
     CSV_sheet_Init();
   }else{

@@ -374,7 +374,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         prev_char = ch;
         if(gps_data_ready){
         	gps_data_ready = 0;
-//        	printf("%s\r\n",gps_rx_buffer);
+        	printf("%s\r\n",gps_rx_buffer);
         	ret = process_gps_data(gps_rx_buffer, &gps_rsltBuf);
 
         	if(ret == 0 && strcmp(gps_rsltBuf.header,"GNGGA") == 0 && GGA_data_used){
@@ -384,11 +384,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         	else if(ret == 0 && strcmp(gps_rsltBuf.header,"GNZDA") == 0 && ZDA_data_used){
         		GPS_ZDA_Data = gps_rsltBuf;
 				ZDA_data_used = 0;
-				GPS_time_get = 1;
+//				GPS_time_get = 1;
 			}
-        	else if(ret != 0){
-        		GPS_time_get = 0;
-        	}
+//        	else if(ret != 0){
+//        		GPS_time_get = 0;
+//        	}
         }
 
         HAL_UART_Receive_DMA(&huart3, &gps_rx_buffer[gps_rx_index], 1);
